@@ -1,0 +1,19 @@
+services:
+  vps-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vps-dashboard
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: file:/data/app.db
+      NEXTAUTH_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - vps_dashboard_data:/data
+
+volumes:
+  vps_dashboard_data:
