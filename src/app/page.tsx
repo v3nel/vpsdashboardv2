@@ -1,10 +1,33 @@
+import Link from "next/link";
+
 import AppShell from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { prisma } from "@/lib/prisma";
+import { listDnsRecords } from "@/lib/integrations/cloudflare";
+import { listCertificates, listProxyHosts } from "@/lib/integrations/npm";
+import { listContainers } from "@/lib/integrations/portainer";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [dns, containers, hosts, certificates, audits] = await Promise.all([
+    listDnsRecords().catch(() => []),
+    listContainers().catch(() => []),
+    listProxyHosts().catch(() => []),
+    listCertificates().catch(() => []),
+    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 5 }).catch(() => []),
+  ]);
+
+  const stats = [
+    { label: "Domaines actifs", value: String(dns.length), note: "Cloudflare" },
+    { label: "Containers", value: String(containers.length), note: "Portainer" },
+    { label: "Hosts proxy", value: String(hosts.length), note: "NPM" },
+    { label: "Certificats SSL", value: String(certificates.length), note: "NPM" },
+  ];
+
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
@@ -16,18 +39,15 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline">Dernière synchro: il y a 2 min</Badge>
-            <Button>Nouvelle action</Button>
+            <Badge variant="outline">Données live si APIs configurées</Badge>
+            <Link className={buttonVariants()} href="/apps">
+              Créer une app
+            </Link>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            { label: "Domaines actifs", value: "14", note: "Cloudflare" },
-            { label: "Containers", value: "23", note: "Portainer" },
-            { label: "Hosts", value: "5", note: "Inventaire" },
-            { label: "Certificats SSL", value: "12", note: "NPM" },
-          ].map((stat) => (
+          {stats.map((stat) => (
             <Card key={stat.label}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -50,20 +70,20 @@ export default function Home() {
               <CardTitle>Flux d&apos;activité</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <div className="flex items-center justify-between">
-                <span>proxy.example.com → container api-gateway</span>
-                <Badge variant="secondary">OK</Badge>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span>Certificat auto-renouvelé: blog.example.com</span>
-                <Badge variant="secondary">NPM</Badge>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span>Nouvelle image déployée: redis-cache</span>
-                <Badge variant="outline">Portainer</Badge>
-              </div>
+              {audits.length === 0 ? (
+                <p>Aucune activité locale enregistrée.</p>
+              ) : null}
+              {audits.map((audit, index) => (
+                <div key={audit.id} className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>{audit.action}{audit.target ? `: ${audit.target}` : ""}</span>
+                    <Badge variant={audit.status === "success" ? "secondary" : "outline"}>
+                      {audit.status}
+                    </Badge>
+                  </div>
+                  {index < audits.length - 1 && <Separator />}
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -72,13 +92,21 @@ export default function Home() {
               <CardTitle>Actions rapides</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              <Button className="w-full">Créer une app</Button>
-              <Button variant="outline" className="w-full">
+              <Link className={buttonVariants({ className: "w-full" })} href="/apps">
+                Créer une app
+              </Link>
+              <Link
+                className={buttonVariants({ variant: "outline", className: "w-full" })}
+                href="/domains"
+              >
                 Ajouter un domaine
-              </Button>
-              <Button variant="outline" className="w-full">
-                Déployer un container
-              </Button>
+              </Link>
+              <Link
+                className={buttonVariants({ variant: "outline", className: "w-full" })}
+                href="/containers"
+              >
+                Voir containers
+              </Link>
               <Button variant="ghost" className="w-full">
                 Consulter les logs
               </Button>

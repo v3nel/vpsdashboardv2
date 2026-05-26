@@ -1,6 +1,9 @@
+import Link from "next/link";
+
+import SignOutItem from "@/components/auth/sign-out-item";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,21 +30,27 @@ export default function Topbar() {
         />
       </div>
       <div className="flex items-center gap-3">
-        <Button variant="outline">Ajouter</Button>
+        <Link className={buttonVariants({ variant: "outline" })} href="/apps">
+          Ajouter
+        </Link>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-9 w-9 rounded-full p-0">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>VP</AvatarFallback>
-              </Avatar>
-            </Button>
+          <DropdownMenuTrigger
+            className={buttonVariants({
+              variant: "ghost",
+              className: "h-9 w-9 rounded-full p-0",
+            })}
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>VP</AvatarFallback>
+            </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Paramètres</DropdownMenuItem>
-            <DropdownMenuItem>Facturation</DropdownMenuItem>
-            <DropdownMenuItem>Se déconnecter</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href="/settings">Paramètres</Link>
+            </DropdownMenuItem>
+            <SignOutItem />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

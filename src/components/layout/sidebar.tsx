@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,9 @@ export default function Sidebar() {
           );
         })}
         <div className="mt-auto px-3 pb-2 pt-6">
-          <Button className="w-full">Créer une app</Button>
+          <Link className={buttonVariants({ className: "w-full" })} href="/apps">
+            Créer une app
+          </Link>
         </div>
       </nav>
     </aside>
