@@ -51,8 +51,12 @@ async function cfFetch<T>(path: string, init?: RequestInit) {
   return payload.result;
 }
 
+function apexTarget() {
+  return process.env.NEXT_PUBLIC_DEFAULT_DOMAIN ?? "example.com";
+}
+
 export async function listDnsRecords() {
-  return cfFetch<CloudflareRecord[]>("/dns_records?type=A&per_page=100");
+  return cfFetch<CloudflareRecord[]>("/dns_records?per_page=100");
 }
 
 export async function upsertARecord(name: string) {
@@ -80,6 +84,36 @@ export async function upsertARecord(name: string) {
     method: "POST",
     body,
   });
+}
+
+export async function upsertCnameRecord(name: string, target = apexTarget()) {
+  const records = await cfFetch<CloudflareRecord[]>(
+    `/dns_records?type=CNAME&name=${encodeURIComponent(name)}&per_page=1`
+  );
+
+  const body = JSON.stringify({
+    type: "CNAME",
+    name,
+    content: target,
+    proxied: true,
+    ttl: 1,
+  });
+
+  if (records[0]) {
+    return cfFetch<CloudflareRecord>(`/dns_records/${records[0].id}`, {
+      method: "PUT",
+      body,
+    });
+  }
+
+  return cfFetch<CloudflareRecord>("/dns_records", {
+    method: "POST",
+    body,
+  });
+}
+
+export function getApexTarget() {
+  return apexTarget();
 }
 
 export async function deleteDnsRecord(id: string) {

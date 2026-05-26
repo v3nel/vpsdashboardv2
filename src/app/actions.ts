@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { analyzeCompose } from "@/lib/compose";
 import { writeAudit } from "@/lib/audit";
-import { upsertARecord, deleteDnsRecord } from "@/lib/integrations/cloudflare";
+import {
+  deleteDnsRecord,
+  getApexTarget,
+  upsertARecord,
+  upsertCnameRecord,
+} from "@/lib/integrations/cloudflare";
 import { createProxyHost } from "@/lib/integrations/npm";
 import { deployStackFromCompose } from "@/lib/integrations/portainer";
 import { prisma } from "@/lib/prisma";
@@ -135,10 +140,13 @@ export async function deployAppAction(
   }
 
   const resolvedDomains = domains.length > 0 ? domains : preview.exposures;
+  const apexTarget = getApexTarget();
 
   try {
+    await upsertARecord(apexTarget);
+
     for (const exposure of resolvedDomains) {
-      await upsertARecord(exposure.domain);
+      await upsertCnameRecord(exposure.domain, apexTarget);
     }
 
     await deployStackFromCompose(stackName, preview.transformedCompose);
