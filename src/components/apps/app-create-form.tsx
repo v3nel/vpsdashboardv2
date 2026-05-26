@@ -121,6 +121,7 @@ export default function AppCreateForm() {
               </p>
             ) : null}
             <Button
+              type="submit"
               className="w-full"
               disabled={pending || preview.exposures.length === 0}
             >

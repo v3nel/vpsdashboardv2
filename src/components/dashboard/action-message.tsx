@@ -27,7 +27,7 @@ export function ActionForm({
           {state.message}
         </p>
       ) : null}
-      <Button disabled={pending} className="w-full">
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? "En cours..." : submitLabel}
       </Button>
     </form>

@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 
 async function verifyHcaptcha(token: string | undefined) {
   if (!process.env.HCAPTCHA_SECRET) {
-    return false;
+    return true;
   }
 
   if (!token) {

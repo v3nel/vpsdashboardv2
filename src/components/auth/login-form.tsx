@@ -25,7 +25,7 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
     setError("");
 
     const form = new FormData(event.currentTarget);
-    if (!captchaToken) {
+    if (siteKey && !captchaToken) {
       setError("Valide le hCaptcha avant de te connecter.");
       return;
     }
@@ -79,12 +79,13 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
           onExpire={() => setCaptchaToken("")}
         />
       ) : (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          HCAPTCHA_SITE_KEY manque dans l&apos;environnement.
+        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          hCaptcha est desactive car HCAPTCHA_SITE_KEY manque dans
+          l&apos;environnement.
         </p>
       )}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <Button className="w-full" disabled={pending || !siteKey}>
+      <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Connexion..." : "Se connecter"}
       </Button>
     </form>

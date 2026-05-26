@@ -55,7 +55,7 @@ export default async function DomainsPage() {
                       <form action={deleteDnsRecordAction}>
                         <input type="hidden" name="id" value={domain.id} />
                         <input type="hidden" name="name" value={domain.name} />
-                        <Button variant="destructive" size="sm">
+                        <Button type="submit" variant="destructive" size="sm">
                           Supprimer
                         </Button>
                       </form>
