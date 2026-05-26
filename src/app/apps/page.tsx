@@ -1,11 +1,19 @@
 import AppShell from "@/components/layout/app-shell";
+import AppCreateForm from "@/components/apps/app-create-form";
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { prisma } from "@/lib/prisma";
 
-export default function AppsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AppsPage() {
+  const deployments = await prisma.appDeployment.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
@@ -15,8 +23,7 @@ export default function AppsPage() {
             <h1 className="text-2xl font-semibold tracking-tight">Apps</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline">2 apps</Badge>
-            <Button>Créer une app</Button>
+            <Badge variant="outline">{deployments.length} apps</Badge>
           </div>
         </div>
 
@@ -30,16 +37,7 @@ export default function AppsPage() {
                 Colle un docker-compose ou charge un fichier pour préparer un
                 déploiement avec proxy et SSL.
               </p>
-              <Input
-                type="file"
-                accept=".yml,.yaml"
-                className="cursor-pointer"
-              />
-              <Separator />
-              <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-                Zone de collage du docker-compose (bientôt disponible).
-              </div>
-              <Button className="w-full">Analyser le compose</Button>
+              <AppCreateForm />
             </CardContent>
           </Card>
 
@@ -48,15 +46,18 @@ export default function AppsPage() {
               <CardTitle>Dernières apps</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">blog-stack</p>
-                <p>Déployée via Portainer</p>
-              </div>
-              <Separator />
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">api-stack</p>
-                <p>Proxy géré par NPM</p>
-              </div>
+              {deployments.length === 0 ? (
+                <EmptyState message="Aucun deploiement local enregistre." />
+              ) : null}
+              {deployments.map((deployment, index) => (
+                <div key={deployment.id} className="space-y-4">
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground">{deployment.name}</p>
+                    <p>{deployment.status} via Portainer/NPM</p>
+                  </div>
+                  {index < deployments.length - 1 && <Separator />}
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>

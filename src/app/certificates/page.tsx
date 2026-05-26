@@ -1,16 +1,17 @@
 import AppShell from "@/components/layout/app-shell";
+import { EmptyState, ErrorState } from "@/components/dashboard/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { listCertificates } from "@/lib/integrations/npm";
 
-const certificates = [
-  { domain: "example.com", status: "Valide", expiresIn: "57 jours" },
-  { domain: "api.example.com", status: "Valide", expiresIn: "21 jours" },
-  { domain: "staging.example.com", status: "En attente", expiresIn: "-" },
-];
+export const dynamic = "force-dynamic";
 
-export default function CertificatesPage() {
+export default async function CertificatesPage() {
+  const result = await listCertificates()
+    .then((certificates) => ({ certificates, error: "" }))
+    .catch((error: Error) => ({ certificates: [], error: error.message }));
+
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
@@ -22,8 +23,7 @@ export default function CertificatesPage() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline">12 certificats</Badge>
-            <Button>Renouveler</Button>
+            <Badge variant="outline">{result.certificates.length} certificats</Badge>
           </div>
         </div>
 
@@ -32,22 +32,24 @@ export default function CertificatesPage() {
             <CardTitle>Statut des certificats</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {certificates.map((cert, index) => (
-              <div key={cert.domain} className="space-y-4">
+            {result.error ? <ErrorState message={result.error} /> : null}
+            {!result.error && result.certificates.length === 0 ? (
+              <EmptyState message="Aucun certificat NPM trouve." />
+            ) : null}
+            {result.certificates.map((cert, index) => (
+              <div key={cert.id} className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium">{cert.domain}</p>
+                    <p className="font-medium">
+                      {cert.nice_name || cert.domain_names?.join(", ") || `Certificat ${cert.id}`}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      Expire dans {cert.expiresIn}
+                      Expiration {cert.expires_on ?? "inconnue"}
                     </p>
                   </div>
-                  <Badge
-                    variant={cert.status === "Valide" ? "secondary" : "outline"}
-                  >
-                    {cert.status}
-                  </Badge>
+                  <Badge variant="secondary">{cert.provider ?? "LetsEncrypt"}</Badge>
                 </div>
-                {index < certificates.length - 1 && <Separator />}
+                {index < result.certificates.length - 1 && <Separator />}
               </div>
             ))}
           </CardContent>

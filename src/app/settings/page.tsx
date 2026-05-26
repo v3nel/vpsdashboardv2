@@ -1,11 +1,16 @@
 import AppShell from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { envStatus } from "@/lib/env";
+import { REQUIRED_ENV } from "@/lib/integrations";
+
+export const dynamic = "force-dynamic";
 
 export default function SettingsPage() {
+  const statuses = envStatus([...REQUIRED_ENV, "ADMIN_EMAIL", "ADMIN_PASSWORD"]);
+
   return (
     <AppShell>
       <div className="flex flex-col gap-6">
@@ -24,21 +29,22 @@ export default function SettingsPage() {
             <CardTitle>Connexions API</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Cloudflare Token</p>
-              <Input placeholder="CF_API_TOKEN" disabled />
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Portainer URL</p>
-              <Input placeholder="https://portainer.local" disabled />
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Nginx Proxy Manager URL</p>
-              <Input placeholder="https://npm.local" disabled />
-            </div>
-            <Button className="w-full">Mettre à jour</Button>
+            {statuses.map((item, index) => (
+              <div key={item.key} className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-[220px_1fr_auto] md:items-center">
+                  <p className="text-sm font-medium">{item.key}</p>
+                  <Input
+                    value={item.configured ? "Configure via environnement" : "Manquant"}
+                    disabled
+                    readOnly
+                  />
+                  <Badge variant={item.configured ? "secondary" : "outline"}>
+                    {item.configured ? "OK" : "A definir"}
+                  </Badge>
+                </div>
+                {index < statuses.length - 1 && <Separator />}
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
